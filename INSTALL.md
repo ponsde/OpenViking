@@ -67,13 +67,16 @@ cat > ~/.openviking/ov.conf << 'EOF'
     "api_base": "https://ark.cn-beijing.volces.com/api/v3"
   },
   "storage": {
-    "workspace": "~/.openviking/data"
+    "vectordb": { "backend": "local" },
+    "agfs": { "backend": "local" }
   }
 }
 EOF
 ```
 
 **Replace `your-api-key` with your actual API key.**
+
+> 💡 **Note:** Data is stored in `./data` by default. You can change this by setting the `OPENVIKING_CONFIG_DIR` environment variable before starting the server.
 
 Start the server in background:
 
