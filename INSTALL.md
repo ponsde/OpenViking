@@ -102,6 +102,8 @@ EOF
 
 Skills enable agents to use OpenViking. Install them to your agent's skill directory:
 
+> 🤖 **For AI Agents reading this:** Ask your user if they want to install the OpenViking skills (adding-memory, adding-resource, searching-context). Proceed only if they confirm.
+
 ```bash
 mkdir -p ~/.openclaw/skills
 
