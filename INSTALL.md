@@ -1,4 +1,4 @@
-# OpenViking Installation Guide
+# Install OpenViking
 
 Quick installation guide for OpenViking - the Context Database for AI Agents.
 
@@ -175,7 +175,7 @@ ov search "OpenViking working"
 
 For advanced setup options (cloud deployment, custom storage, multiple model providers, etc.), see:
 
-**[INSTALLATION_ADVANCED.md](./INSTALLATION_ADVANCED.md)**
+**[INSTALL_ADVANCED.md](./INSTALL_ADVANCED.md)**
 
 This includes:
 - Full configuration reference
@@ -190,7 +190,6 @@ This includes:
 ## Requirements
 
 - Python 3.10+
-- Rust (for building ov CLI)
 - API keys for VLM and embedding models
 
 **Supported Model Providers:** Volcengine, OpenAI, Anthropic, DeepSeek, Google, Moonshot, Zhipu, DashScope, MiniMax, OpenRouter, vLLM

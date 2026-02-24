@@ -1,8 +1,8 @@
-# OpenViking Installation Guide (Advanced)
+# Advanced Installation & Configuration
 
 Detailed configuration and deployment options for OpenViking.
 
-For the quick start guide, see **[INSTALLATION.md](./INSTALLATION.md)**.
+For the quick start guide, see **[INSTALL.md](./INSTALL.md)**.
 
 ---
 
@@ -10,6 +10,7 @@ For the quick start guide, see **[INSTALLATION.md](./INSTALLATION.md)**.
 
 - [Full Configuration Reference](#full-configuration-reference)
 - [Alternative Installation Methods](#alternative-installation-methods)
+- [Building from Source](#building-from-source)
 - [Cloud Deployment](#cloud-deployment)
 - [Docker/Container Setup](#dockercontainer-setup)
 - [Multiple Model Providers](#multiple-model-providers)
@@ -198,7 +199,7 @@ export OPENVIKING_CLI_CONFIG_FILE=~/.openviking/ovcli.conf
 
 ## Alternative Installation Methods
 
-### Using pip (not recommended)
+### Using pip
 
 While uv is the recommended method, you can also use pip:
 
@@ -227,6 +228,61 @@ source venv/bin/activate  # Linux/macOS
 venv\Scripts\activate  # Windows
 
 pip install openviking
+```
+
+---
+
+## Building from Source
+
+> ⚠️ **Note:** Building from source is only needed for development or if you need to modify the code. For regular use, use `uv tool install` or `pip install` to get pre-built wheels.
+
+### Prerequisites
+
+- Python 3.10+
+- Rust (for ov CLI)
+- Go 1.21+ (for AGFS server)
+- CMake 3.15+
+- GCC/G++ or Clang
+
+### Build Steps
+
+```bash
+git clone https://github.com/volcengine/OpenViking.git
+cd OpenViking
+
+# Install Python package (builds AGFS and C++ extensions)
+pip install .
+
+# Or with uv
+uv pip install .
+
+# Install ov CLI
+cargo install --path crates/ov_cli
+```
+
+### AGFS Build Details
+
+The AGFS (Agent Filesystem) server is written in Go and is automatically built during installation:
+
+```bash
+# AGFS source location
+third_party/agfs/agfs-server/
+
+# To build manually:
+cd third_party/agfs/agfs-server
+go build -o build/agfs-server cmd/server/main.go
+```
+
+### C++ Extensions
+
+OpenViking includes C++ extensions for high-performance vector operations:
+
+```bash
+# CMake is used automatically during pip install
+# To build manually:
+mkdir build && cd build
+cmake ..
+make -j$(nproc)
 ```
 
 ---
