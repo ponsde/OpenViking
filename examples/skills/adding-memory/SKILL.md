@@ -1,6 +1,6 @@
 ---
 name: adding-memory
-description: Add memories, learnings and context to OpenViking, aka. ov. Use when saving insights in chat. Trigger this tool when 1. sees keyword "ovm"; 2. is explicitly requested memorizing e.g. "remember ..." 3. identifies valuable memory worth adding
+description: Add memories, learnings and context to OpenViking, aka. ov. Use when saving insights in chat. Trigger this tool when 1. is explicitly requested memorizing e.g. "remember ..." 2. identifies valuable memory worth adding
 compatibility: configuration file at `~/.openviking/ovcli.conf`
 ---
 

@@ -3,7 +3,7 @@
 ## T1: Profile — Basic Identity
 **Conversation:**
 1. `我叫张明，在字节跳动做后端开发，base北京`
-2. `ovm`
+2. `remember this`
 
 **Eval search:** "张明是谁"
 **Expected memory:**
@@ -14,9 +14,9 @@
 ## T2: Profile — Incremental Update (Merge)
 **Conversation:**
 1. `我叫张明，做后端开发`
-2. `ovm`
+2. `remember this`
 3. `最近转岗了，现在做 infra`
-4. `ovm`
+4. `remember this`
 
 **Eval search:** "张明做什么工作"
 **Expected memory:**
@@ -28,7 +28,7 @@
 **Conversation:**
 1. `写代码的时候我习惯用 vim + tmux，不喜欢 IDE`
 2. `回复我的时候用中文就好，技术术语保持英文`
-3. `ovm`
+3. `remember this`
 
 **Eval search:** "用户开发工具偏好"
 **Expected memories:**
@@ -41,7 +41,7 @@
 **Conversation:**
 1. `我们组的 tech lead 是 Kevin，他主推用 Go 重写网关`
 2. `目前在做 Project Atlas，是一个内部 API 网关平台`
-3. `ovm`
+3. `remember this`
 
 **Eval search:** "Kevin" / "Project Atlas"
 **Expected memories:**
@@ -54,7 +54,7 @@
 **Conversation:**
 1. `今天和老板聊了，决定放弃 Python 方案，全面转 Go`
 2. `主要原因是性能瓶颈和团队技术栈统一`
-3. `ovm`
+3. `remember this`
 
 **Eval search:** "为什么选 Go"
 **Expected memory:**
@@ -68,7 +68,7 @@
 2. `查了 trace 发现是下游 Redis 偶尔 latency spike`
 3. `试了连接池调大没用，最后发现是 Redis cluster 有个慢节点`
 4. `把那个节点摘掉换了新实例就好了`
-5. `ovm`
+5. `remember this`
 
 **Eval search:** "gRPC deadline exceeded 怎么解决"
 **Expected memory:**
@@ -81,7 +81,7 @@
 1. `我发现做 code review 有个好办法`
 2. `先看测试理解意图，再看 diff，最后跑一遍确认`
 3. `这样比直接看 diff 效率高很多，漏的也少`
-4. `ovm`
+4. `remember this`
 
 **Eval search:** "code review 方法"
 **Expected memory:**
@@ -92,11 +92,11 @@
 ## T8: Patterns — Merge Existing
 **Conversation (session A):**
 1. `部署前一定要先跑 smoke test`
-2. `ovm`
+2. `remember this`
 
 **Conversation (session B):**
 1. `部署前除了 smoke test，还要检查 config diff`
-2. `ovm`
+2. `remember this`
 
 **Eval search:** "部署前检查"
 **Expected memory:**
@@ -113,7 +113,7 @@
 5. `最后我们决定用 semantic chunking + overlap 50 token 的方案`
 6. `关键 insight 是：chunk boundary 要对齐语义边界，不能硬切`
 7. `以后做 RAG 都应该先评估 chunk 质量再调 retrieval`
-8. `ovm`
+8. `remember this`
 
 **Eval search:** "RAG chunking 怎么做" / "Lisa" / "chunk 优化经验"
 **Expected memories:**
@@ -129,7 +129,7 @@
 1. `今天天气不错`
 2. `帮我写个 hello world`
 3. `谢谢，挺好的`
-4. `ovm`
+4. `remember this`
 
 **Eval search:** "天气" / "hello world"
 **Expected memory:** **None** (no meaningful memory to extract)
@@ -157,4 +157,3 @@
 - Multi-category extraction from one conversation (T9)
 - Noise resistance — no spurious memories (T10)
 - Non-mergeable uniqueness — events/cases create new entries, not merge (T5, T6)
-

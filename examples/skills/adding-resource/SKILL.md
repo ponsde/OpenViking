@@ -1,6 +1,6 @@
 ---
 name: adding-resource
-description: Add resources to OpenViking, aka. ov. Use when an agent needs to add files, URLs, or external knowledge during interactions. Trigger this tool when 1. sees keyword "ovr"; 2. is explicitly requested adding files or knowledge; 3. identifies valuable resources worth importing
+description: Add resources to OpenViking, aka. ov. Use when an agent needs to add files, URLs, or external knowledge during interactions. Trigger this tool when 1. is explicitly requested adding files or knowledge; 2. identifies valuable resources worth importing
 compatibility: CLI configured at `~/.openviking/ovcli.conf`
 ---
 

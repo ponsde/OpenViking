@@ -133,29 +133,16 @@ curl -o ~/.openclaw/skills/searching-context/SKILL.md \
 
 ---
 
-## Using Skills
+## Using OpenViking Memory
 
-Once installed, agents can use these keywords during chat:
+Once skills are installed, agents can use OpenViking to store and retrieve context:
 
-| Keyword | Skill | What It Does |
-|---------|-------|--------------|
-| `ovm` | adding-memory | Extracts and stores insights from conversation |
-| `ovr` | adding-resource | Imports files/URLs into OpenViking |
-| `ovs` | searching-context | Searches stored memories and resources |
+**Storing memories:** Agents automatically extract and store insights from conversations
+**Adding resources:** Import files, URLs, or documents into OpenViking for later retrieval
+**Searching context:** Query stored memories and resources to provide personalized responses
 
-**Example chat flow:**
-```
-User: I prefer using vim for coding
-User: ovm
-→ Agent extracts and stores: "User prefers vim for coding"
-
-User: Please add https://example.com/docs
-User: ovr
-→ Agent imports and processes the URL
-
-User: ovs What's my editor preference?
-→ Agent searches and returns: "User prefers vim for coding"
-```
+The skills work transparently — just chat naturally and the agent will use OpenViking
+when it needs to remember something, add external knowledge, or search previous context.
 
 ---
 

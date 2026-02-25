@@ -1,6 +1,6 @@
 ---
 name: searching-context
-description: Search memories and resource context from OpenViking, aka. ov. Trigger this tool when 1. sees keyword "ovs"; 2. is explicitly requested searching files or knowledge; 3. sees `search context` request
+description: Search memories and resource context from OpenViking, aka. ov. Trigger this tool when 1. is explicitly requested searching files or knowledge; 2. sees `search context` request
 compatibility: CLI configured at `~/.openviking/ovcli.conf`
 ---
 # OpenViking (OV) context searching
