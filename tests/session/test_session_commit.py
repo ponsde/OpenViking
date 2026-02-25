@@ -81,15 +81,21 @@ class TestCommit:
     ):
         """Regression test: active_count must actually increment after commit.
 
-        Previously _update_active_counts() called storage.update() with
-        MongoDB-style kwargs (filter=, update=) that don't match the method
-        signature update(collection, id, data), causing a silent TypeError and
-        leaving active_count permanently at 0.
+        Previously _update_active_counts() had two bugs:
+        1. Called storage.update() with MongoDB-style kwargs (filter=, update=)
+           that don't match the actual signature update(collection, id, data),
+           causing a silent TypeError on every commit.
+        2. Used $inc syntax which storage.update() doesn't support.
+
+        Both bugs left active_count permanently stuck at 0.
         """
         client, uri = client_with_resource_sync
 
+        # Access vikingdb_manager via the public .service property on LocalClient
+        vikingdb = client._client.service.vikingdb_manager
+
         # Read active_count before any usage
-        record_before = await client._service.vikingdb_manager.fetch_by_uri("context", uri)
+        record_before = await vikingdb.fetch_by_uri("context", uri)
         assert record_before is not None, f"Resource not found: {uri}"
         count_before = record_before.get("active_count") or 0
 
@@ -103,7 +109,7 @@ class TestCommit:
         assert result.get("active_count_updated") == 1
 
         # Verify the count actually changed in storage
-        record_after = await client._service.vikingdb_manager.fetch_by_uri("context", uri)
+        record_after = await vikingdb.fetch_by_uri("context", uri)
         assert record_after is not None
         count_after = record_after.get("active_count") or 0
         assert count_after == count_before + 1, (
