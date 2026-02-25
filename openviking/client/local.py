@@ -262,11 +262,37 @@ class LocalClient(BaseClient):
         """Commit a session (archive and extract memories)."""
         return await self._service.sessions.commit(session_id, self._ctx)
 
-    async def add_message(self, session_id: str, role: str, content: str) -> Dict[str, Any]:
-        """Add a message to a session."""
+    async def add_message(
+        self,
+        session_id: str,
+        role: str,
+        content: str | None = None,
+        parts: list[dict] | None = None,
+    ) -> Dict[str, Any]:
+        """Add a message to a session.
+
+        Args:
+            session_id: Session ID
+            role: Message role ("user" or "assistant")
+            content: Text content (simple mode, backward compatible)
+            parts: Parts array (full Part support mode)
+
+        If both content and parts are provided, parts takes precedence.
+        """
+        from openviking.message.part import Part, TextPart, part_from_dict
+
         session = self._service.sessions.session(self._ctx, session_id)
         await session.load()
-        session.add_message(role, content)
+
+        message_parts: list[Part]
+        if parts is not None:
+            message_parts = [part_from_dict(p) for p in parts]
+        elif content is not None:
+            message_parts = [TextPart(text=content)]
+        else:
+            raise ValueError("Either content or parts must be provided")
+
+        session.add_message(role, message_parts)
         return {
             "session_id": session_id,
             "message_count": len(session.messages),
