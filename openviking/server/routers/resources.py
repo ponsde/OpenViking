@@ -5,7 +5,7 @@
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 from pydantic import BaseModel, model_validator
@@ -89,6 +89,25 @@ class AddSkillRequest(BaseModel):
     wait: bool = False
     timeout: Optional[float] = None
     telemetry: TelemetryRequest = False
+
+
+class PatchResourceRequest(BaseModel):
+    """Request model for patching resource metadata and summaries.
+
+    At least one of meta, abstract, or overview must be provided.
+    """
+
+    uri: str
+    meta: Optional[Dict[str, Any]] = None
+    abstract: Optional[str] = None
+    overview: Optional[str] = None
+    telemetry: TelemetryRequest = False
+
+    @model_validator(mode="after")
+    def check_has_update(self):
+        if self.meta is None and self.abstract is None and self.overview is None:
+            raise ValueError("At least one of 'meta', 'abstract', or 'overview' must be provided")
+        return self
 
 
 def _cleanup_temp_files(temp_dir: Path, max_age_hours: int = 1):
@@ -211,6 +230,31 @@ async def add_skill(
             ctx=_ctx,
             wait=request.wait,
             timeout=request.timeout,
+        ),
+    )
+    return Response(
+        status="ok",
+        result=execution.result,
+        telemetry=execution.telemetry,
+    ).model_dump(exclude_none=True)
+
+
+@router.patch("/resources")
+async def patch_resource(
+    request: PatchResourceRequest,
+    _ctx: RequestContext = Depends(get_request_context),
+):
+    """Patch resource metadata and/or summaries (L0 abstract, L1 overview)."""
+    service = get_service()
+    execution = await run_operation(
+        operation="resources.patch_resource",
+        telemetry=request.telemetry,
+        fn=lambda: service.resources.patch_resource(
+            uri=request.uri,
+            ctx=_ctx,
+            meta=request.meta,
+            abstract=request.abstract,
+            overview=request.overview,
         ),
     )
     return Response(
