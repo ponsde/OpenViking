@@ -62,24 +62,7 @@ RUN case "${UV_LOCK_STRATEGY}" in \
     esac
 
 # Build ragfs-python (Rust AGFS binding).
-COPY <<'EXTRACT_SCRIPT' /tmp/extract_ragfs.py
-import zipfile, glob, os, sys
-tmpdir, ov_lib = os.environ['_TMPDIR'], os.environ['_OV_LIB']
-whls = glob.glob(os.path.join(tmpdir, 'ragfs_python-*.whl'))
-assert whls, 'maturin produced no wheel'
-with zipfile.ZipFile(whls[0]) as zf:
-    for name in zf.namelist():
-        bn = os.path.basename(name)
-        if bn.startswith('ragfs_python') and (bn.endswith('.so') or bn.endswith('.pyd')):
-            dst = os.path.join(ov_lib, bn)
-            with zf.open(name) as src, open(dst, 'wb') as f:
-                f.write(src.read())
-            os.chmod(dst, 0o755)
-            print(f'ragfs-python: extracted {bn} -> {dst}')
-            sys.exit(0)
-print('WARNING: No ragfs_python .so/.pyd in wheel')
-sys.exit(1)
-EXTRACT_SCRIPT
+COPY docker/extract_ragfs.py /tmp/extract_ragfs.py
 RUN uv pip install maturin && \
     export PATH="/app/.venv/bin:$PATH" && \
     export _TMPDIR=$(mktemp -d) && \
@@ -107,37 +90,7 @@ ENV PATH="/app/.venv/bin:$PATH"
 ENV OPENVIKING_CONFIG_FILE="/app/ov.conf"
 
 # Entrypoint script: generate ov.conf from env vars at runtime, then start server
-COPY <<'START_SCRIPT' /usr/local/bin/start.sh
-#!/bin/sh
-set -eu
-
-cat > /app/ov.conf <<EOF
-{
-  "server": {
-    "host": "0.0.0.0",
-    "port": 1933,
-    "root_api_key": "${OV_ROOT_API_KEY:-ov-demo-key}",
-    "cors_origins": ["*"]
-  },
-  "storage": {
-    "workspace": "/app/data",
-    "vectordb": { "backend": "local" },
-    "agfs": { "backend": "local" }
-  },
-  "embedding": {
-    "dense": {
-      "provider": "${OV_EMBED_PROVIDER:-openai}",
-      "model": "${OV_EMBED_MODEL:-text-embedding-3-small}",
-      "api_key": "${OV_EMBED_API_KEY:-}",
-      "api_base": "${OV_EMBED_API_BASE:-https://api.openai.com/v1}",
-      "dimension": ${OV_EMBED_DIMENSION:-1536}
-    }
-  }
-}
-EOF
-
-exec openviking-server
-START_SCRIPT
+COPY docker/start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
 
 EXPOSE 1933
