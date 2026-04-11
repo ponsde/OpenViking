@@ -64,6 +64,33 @@ RUN case "${UV_LOCK_STRATEGY}" in \
             ;; \
     esac
 
+# Build ragfs-python (Rust AGFS binding) and extract the native extension
+# into the installed openviking package so it ships alongside the Go binding.
+RUN uv pip install maturin && \
+    export _TMPDIR=$(mktemp -d) && \
+    cd crates/ragfs-python && \
+    maturin build --release --out "$_TMPDIR" && \
+    cd ../.. && \
+    export _OV_LIB=$(/app/.venv/bin/python -c "import openviking; from pathlib import Path; print(Path(openviking.__file__).resolve().parent / 'lib')") && \
+    mkdir -p "$_OV_LIB" && \
+    /app/.venv/bin/python -c " \
+import zipfile, glob, os, sys; \
+tmpdir, ov_lib = os.environ['_TMPDIR'], os.environ['_OV_LIB']; \
+whls = glob.glob(os.path.join(tmpdir, 'ragfs_python-*.whl')); \
+assert whls, 'maturin produced no wheel'; \
+with zipfile.ZipFile(whls[0]) as zf: \
+    for name in zf.namelist(): \
+        bn = os.path.basename(name); \
+        if bn.startswith('ragfs_python') and (bn.endswith('.so') or bn.endswith('.pyd')): \
+            dst = os.path.join(ov_lib, bn); \
+            with zf.open(name) as src, open(dst, 'wb') as f: f.write(src.read()); \
+            os.chmod(dst, 0o755); \
+            print(f'ragfs-python: extracted {bn} -> {dst}'); \
+            sys.exit(0); \
+print('WARNING: No ragfs_python .so/.pyd in wheel'); sys.exit(1) \
+    " && \
+    rm -rf "$_TMPDIR"
+
 # Stage 4: runtime
 FROM python:3.13-slim-trixie
 
@@ -80,6 +107,21 @@ COPY docker/openviking-console-entrypoint.sh /usr/local/bin/openviking-console-e
 RUN chmod +x /usr/local/bin/openviking-console-entrypoint
 ENV PATH="/app/.venv/bin:$PATH"
 ENV OPENVIKING_CONFIG_FILE="/app/ov.conf"
+
+# Create minimal config for Railway/cloud deployment.
+# Override by mounting your own /app/ov.conf or setting OPENVIKING_CONFIG_FILE.
+RUN printf '{\n\
+  "server": {\n\
+    "host": "0.0.0.0",\n\
+    "port": 1933,\n\
+    "root_api_key": "ov-demo-key-change-me"\n\
+  },\n\
+  "storage": {\n\
+    "workspace": "/app/data",\n\
+    "vectordb": { "backend": "local" },\n\
+    "agfs": { "backend": "local" }\n\
+  }\n\
+}\n' > /app/ov.conf
 
 EXPOSE 1933 8020
 
