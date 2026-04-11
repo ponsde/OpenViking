@@ -253,6 +253,5 @@ export function createOvClient(options: OvClientOptions = {}): OvClientAdapter {
 }
 
 export const ovClient = createOvClient({
-  baseUrl: 'http://127.0.0.1:1933',
   bindSdkClient: true,
 })
