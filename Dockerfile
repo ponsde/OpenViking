@@ -76,6 +76,7 @@ RUN case "${UV_LOCK_STRATEGY}" in \
 # into the installed openviking package so it ships alongside the Go binding.
 # Selection at runtime via RAGFS_IMPL env var (auto/rust/go).
 RUN uv pip install maturin && \
+    export PATH="/app/.venv/bin:$PATH" && \
     export _TMPDIR=$(mktemp -d) && \
     cd crates/ragfs-python && \
     maturin build --release --out "$_TMPDIR" && \
