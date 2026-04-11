@@ -62,6 +62,24 @@ RUN case "${UV_LOCK_STRATEGY}" in \
     esac
 
 # Build ragfs-python (Rust AGFS binding).
+COPY <<'EXTRACT_SCRIPT' /tmp/extract_ragfs.py
+import zipfile, glob, os, sys
+tmpdir, ov_lib = os.environ['_TMPDIR'], os.environ['_OV_LIB']
+whls = glob.glob(os.path.join(tmpdir, 'ragfs_python-*.whl'))
+assert whls, 'maturin produced no wheel'
+with zipfile.ZipFile(whls[0]) as zf:
+    for name in zf.namelist():
+        bn = os.path.basename(name)
+        if bn.startswith('ragfs_python') and (bn.endswith('.so') or bn.endswith('.pyd')):
+            dst = os.path.join(ov_lib, bn)
+            with zf.open(name) as src, open(dst, 'wb') as f:
+                f.write(src.read())
+            os.chmod(dst, 0o755)
+            print(f'ragfs-python: extracted {bn} -> {dst}')
+            sys.exit(0)
+print('WARNING: No ragfs_python .so/.pyd in wheel')
+sys.exit(1)
+EXTRACT_SCRIPT
 RUN uv pip install maturin && \
     export PATH="/app/.venv/bin:$PATH" && \
     export _TMPDIR=$(mktemp -d) && \
@@ -70,23 +88,8 @@ RUN uv pip install maturin && \
     cd ../.. && \
     export _OV_LIB=$(/app/.venv/bin/python -c "import openviking; from pathlib import Path; print(Path(openviking.__file__).resolve().parent / 'lib')") && \
     mkdir -p "$_OV_LIB" && \
-    /app/.venv/bin/python -c " \
-import zipfile, glob, os, sys; \
-tmpdir, ov_lib = os.environ['_TMPDIR'], os.environ['_OV_LIB']; \
-whls = glob.glob(os.path.join(tmpdir, 'ragfs_python-*.whl')); \
-assert whls, 'maturin produced no wheel'; \
-with zipfile.ZipFile(whls[0]) as zf: \
-    for name in zf.namelist(): \
-        bn = os.path.basename(name); \
-        if bn.startswith('ragfs_python') and (bn.endswith('.so') or bn.endswith('.pyd')): \
-            dst = os.path.join(ov_lib, bn); \
-            with zf.open(name) as src, open(dst, 'wb') as f: f.write(src.read()); \
-            os.chmod(dst, 0o755); \
-            print(f'ragfs-python: extracted {bn} -> {dst}'); \
-            sys.exit(0); \
-print('WARNING: No ragfs_python .so/.pyd in wheel'); sys.exit(1) \
-    " && \
-    rm -rf "$_TMPDIR"
+    /app/.venv/bin/python /tmp/extract_ragfs.py && \
+    rm -rf "$_TMPDIR" /tmp/extract_ragfs.py
 
 # Stage 4: runtime (backend only)
 FROM python:3.13-slim-trixie
