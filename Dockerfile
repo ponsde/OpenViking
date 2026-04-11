@@ -106,24 +106,43 @@ COPY --from=py-builder /app/.venv /app/.venv
 ENV PATH="/app/.venv/bin:$PATH"
 ENV OPENVIKING_CONFIG_FILE="/app/ov.conf"
 
-# Create minimal config for Railway/cloud deployment.
-RUN printf '{\n\
-  "server": {\n\
-    "host": "0.0.0.0",\n\
-    "port": 1933,\n\
-    "root_api_key": "ov-demo-key-change-me",\n\
-    "cors_origins": ["*"]\n\
-  },\n\
-  "storage": {\n\
-    "workspace": "/app/data",\n\
-    "vectordb": { "backend": "local" },\n\
-    "agfs": { "backend": "local" }\n\
-  }\n\
-}\n' > /app/ov.conf
+# Entrypoint script: generate ov.conf from env vars at runtime, then start server
+COPY <<'START_SCRIPT' /usr/local/bin/start.sh
+#!/bin/sh
+set -eu
+
+cat > /app/ov.conf <<EOF
+{
+  "server": {
+    "host": "0.0.0.0",
+    "port": 1933,
+    "root_api_key": "${OV_ROOT_API_KEY:-ov-demo-key}",
+    "cors_origins": ["*"]
+  },
+  "storage": {
+    "workspace": "/app/data",
+    "vectordb": { "backend": "local" },
+    "agfs": { "backend": "local" },
+    "embedding": {
+      "dense": {
+        "provider": "${OV_EMBED_PROVIDER:-openai}",
+        "model": "${OV_EMBED_MODEL:-text-embedding-3-small}",
+        "api_key": "${OV_EMBED_API_KEY:-}",
+        "api_base": "${OV_EMBED_API_BASE:-https://api.openai.com/v1}",
+        "dimension": ${OV_EMBED_DIMENSION:-1536}
+      }
+    }
+  }
+}
+EOF
+
+exec openviking-server
+START_SCRIPT
+RUN chmod +x /usr/local/bin/start.sh
 
 EXPOSE 1933
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
     CMD curl -fsS http://127.0.0.1:1933/health || exit 1
 
-CMD ["openviking-server"]
+CMD ["start.sh"]
