@@ -39,15 +39,19 @@ COPY openviking_cli/ openviking_cli/
 COPY src/ src/
 
 # Install project and dependencies (triggers setup.py artifact builds + build_extension).
+# OV_SKIP_RAGFS_BUILD=1 tells setup.py to skip the in-tree ragfs-python maturin
+# build; we do that in a dedicated RUN step below where PATH/env is reliable.
+# Without this, uv sync would attempt the maturin build inside its build-isolation
+# env (where the Rust toolchain/env may not match) and fail.
 RUN case "${UV_LOCK_STRATEGY}" in \
         locked) \
-            uv sync --locked --no-editable --extra bot --extra gemini \
+            OV_SKIP_RAGFS_BUILD=1 uv sync --locked --no-editable --extra bot --extra gemini \
             ;; \
         auto) \
             if ! uv lock --check; then \
                 uv lock; \
             fi; \
-            uv sync --locked --no-editable --extra bot --extra gemini \
+            OV_SKIP_RAGFS_BUILD=1 uv sync --locked --no-editable --extra bot --extra gemini \
             ;; \
         *) \
             echo "Unsupported UV_LOCK_STRATEGY: ${UV_LOCK_STRATEGY}" >&2; \
