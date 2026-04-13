@@ -30,13 +30,20 @@ WORKDIR /app
 
 # Copy source required for setup.py artifact builds and native extension build.
 COPY Cargo.toml Cargo.lock ./
-COPY pyproject.toml uv.lock setup.py README.md ./
+COPY pyproject.toml uv.lock setup.py MANIFEST.in README.md ./
 COPY build_support/ build_support/
 COPY bot/ bot/
 COPY crates/ crates/
 COPY openviking/ openviking/
 COPY openviking_cli/ openviking_cli/
 COPY src/ src/
+# Vendored C++ dependencies (spdlog, leveldb, croaring, rapidjson) required by
+# src/CMakeLists.txt via add_subdirectory(../third_party/...). Missing this
+# COPY breaks the setuptools C++ extension build with:
+#   CMake Error at CMakeLists.txt:70 (add_subdirectory):
+#     add_subdirectory given source "../third_party/spdlog-1.14.1" which
+#     is not an existing directory.
+COPY third_party/ third_party/
 
 # Install project and dependencies (triggers setup.py artifact builds + build_extension).
 # OV_SKIP_RAGFS_BUILD=1 tells setup.py to skip the in-tree ragfs-python maturin
