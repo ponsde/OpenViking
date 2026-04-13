@@ -2,6 +2,7 @@ node_modules
 .DS_Store
 dist
 dist-ssr
+.vite
 *.local
 .env
 .nitro
@@ -17,5 +18,7 @@ todos.json
 !src/lib/**
 
 !src/components/legacy/data
+
+!AGENTS.md
 
 script/gen-server-client/generate

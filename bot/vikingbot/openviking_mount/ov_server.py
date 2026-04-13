@@ -110,10 +110,25 @@ class VikingClient:
             return await self.client.find(query, target_uri=target_uri)
         return await self.client.find(query)
 
-    async def add_resource(self, local_path: str, desc: str) -> Optional[Dict[str, Any]]:
-        """添加资源到 Viking"""
-        result = await self.client.add_resource(path=local_path, reason=desc)
-        return result
+    async def add_resource(
+        self,
+        local_path: Optional[str] = None,
+        desc: str = "",
+        temp_file_id: Optional[str] = None,
+        parent: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """添加资源到 Viking。支持 local_path 或 temp_file_id。"""
+        if temp_file_id:
+            body: Dict[str, Any] = {"temp_file_id": temp_file_id, "reason": desc}
+            if parent:
+                body["parent"] = parent
+            response = await self.client._http.post("/api/v1/resources", json=body)
+            data = self.client._handle_response_data(response)
+            return data.get("result")
+        if local_path:
+            result = await self.client.add_resource(path=local_path, reason=desc)
+            return result
+        return None
 
     async def list_resources(
         self, path: Optional[str] = None, recursive: bool = False
@@ -444,7 +459,9 @@ class VikingClient:
 
             if not parts:
                 continue
-            await session.add_message(role=role, parts=parts)
+            # 获取消息的时间戳，如果没有则使用当前时间
+            created_at = message.get("timestamp")
+            await session.add_message(role=role, parts=parts, created_at=created_at)
 
         result = await session.commit_async()
         if client is not self.client:
