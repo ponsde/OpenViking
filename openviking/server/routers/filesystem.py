@@ -12,12 +12,18 @@ from openviking.server.auth import get_request_context
 from openviking.server.dependencies import get_service
 from openviking.server.identity import RequestContext
 from openviking.server.models import Response
+from openviking.server.schemas import ExcludeNoneRoute, URIRef
+from openviking.server.schemas.filesystem import FileStat, FromTo, FSListResult
 from openviking_cli.exceptions import NotFoundError
 
-router = APIRouter(prefix="/api/v1/fs", tags=["filesystem"])
+router = APIRouter(
+    prefix="/api/v1/fs",
+    tags=["filesystem"],
+    route_class=ExcludeNoneRoute,
+)
 
 
-@router.get("/ls")
+@router.get("/ls", response_model=Response[FSListResult])
 async def ls(
     uri: str = Query(..., description="Viking URI"),
     simple: bool = Query(False, description="Return only relative path list"),
@@ -28,8 +34,12 @@ async def ls(
     node_limit: int = Query(1000, description="Maximum number of nodes to list"),
     limit: Optional[int] = Query(None, description="Alias for node_limit"),
     _ctx: RequestContext = Depends(get_request_context),
-):
-    """List directory contents."""
+) -> Response[FSListResult]:
+    """List directory contents.
+
+    Return shape is polymorphic: ``simple=True`` yields a ``List[str]`` of
+    URIs; otherwise a ``List[FileStat]`` with per-entry metadata.
+    """
     service = get_service()
     actual_node_limit = limit if limit is not None else node_limit
     result = await service.fs.ls(
@@ -45,7 +55,7 @@ async def ls(
     return Response(status="ok", result=result)
 
 
-@router.get("/tree")
+@router.get("/tree", response_model=Response[FSListResult])
 async def tree(
     uri: str = Query(..., description="Viking URI"),
     output: str = Query("agent", description="Output format: original or agent"),
@@ -55,8 +65,13 @@ async def tree(
     limit: Optional[int] = Query(None, description="Alias for node_limit"),
     level_limit: int = Query(3, description="Maximum depth level to traverse"),
     _ctx: RequestContext = Depends(get_request_context),
-):
-    """Get directory tree."""
+) -> Response[FSListResult]:
+    """Get directory tree.
+
+    Return shape matches ``/ls`` (flat list, not a recursive node tree).
+    Clients reconstruct hierarchy from the ``rel_path`` field of each
+    entry.
+    """
     service = get_service()
     actual_node_limit = limit if limit is not None else node_limit
     result = await service.fs.tree(
@@ -71,16 +86,16 @@ async def tree(
     return Response(status="ok", result=result)
 
 
-@router.get("/stat")
+@router.get("/stat", response_model=Response[FileStat])
 async def stat(
     uri: str = Query(..., description="Viking URI"),
     _ctx: RequestContext = Depends(get_request_context),
-):
+) -> Response[FileStat]:
     """Get resource status."""
     service = get_service()
     try:
         result = await service.fs.stat(uri, ctx=_ctx)
-        return Response(status="ok", result=result)
+        return Response(status="ok", result=FileStat.model_validate(result))
     except AGFSClientError as e:
         err_msg = str(e).lower()
         if "not found" in err_msg or "no such file or directory" in err_msg:
@@ -94,27 +109,27 @@ class MkdirRequest(BaseModel):
     uri: str
 
 
-@router.post("/mkdir")
+@router.post("/mkdir", response_model=Response[URIRef])
 async def mkdir(
     request: MkdirRequest,
     _ctx: RequestContext = Depends(get_request_context),
-):
+) -> Response[URIRef]:
     """Create directory."""
     service = get_service()
     await service.fs.mkdir(request.uri, ctx=_ctx)
-    return Response(status="ok", result={"uri": request.uri})
+    return Response(status="ok", result=URIRef(uri=request.uri))
 
 
-@router.delete("")
+@router.delete("", response_model=Response[URIRef])
 async def rm(
     uri: str = Query(..., description="Viking URI"),
     recursive: bool = Query(False, description="Remove recursively"),
     _ctx: RequestContext = Depends(get_request_context),
-):
+) -> Response[URIRef]:
     """Remove resource."""
     service = get_service()
     await service.fs.rm(uri, ctx=_ctx, recursive=recursive)
-    return Response(status="ok", result={"uri": uri})
+    return Response(status="ok", result=URIRef(uri=uri))
 
 
 class MvRequest(BaseModel):
@@ -124,12 +139,15 @@ class MvRequest(BaseModel):
     to_uri: str
 
 
-@router.post("/mv")
+@router.post("/mv", response_model=Response[FromTo])
 async def mv(
     request: MvRequest,
     _ctx: RequestContext = Depends(get_request_context),
-):
+) -> Response[FromTo]:
     """Move resource."""
     service = get_service()
     await service.fs.mv(request.from_uri, request.to_uri, ctx=_ctx)
-    return Response(status="ok", result={"from": request.from_uri, "to": request.to_uri})
+    return Response(
+        status="ok",
+        result=FromTo(from_=request.from_uri, to=request.to_uri),
+    )
