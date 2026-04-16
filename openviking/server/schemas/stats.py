@@ -4,7 +4,7 @@
 
 from typing import Dict, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class HotnessDistribution(BaseModel):
@@ -37,7 +37,7 @@ class MemoryStats(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     total_memories: int = 0
-    by_category: Dict[str, int] = {}
+    by_category: Dict[str, int] = Field(default_factory=dict)
     hotness_distribution: Optional[HotnessDistribution] = None
     staleness: Optional[StalenessStats] = None
 

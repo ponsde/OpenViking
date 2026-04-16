@@ -128,9 +128,15 @@ async def readiness_check(request: Request) -> JSONResponse:
 
     all_ok = all(v in ("ok", "not_configured") for v in checks.values())
     status_code = 200 if all_ok else 503
+    # Validate through the model so the runtime body matches the OpenAPI
+    # declaration — without this, responses= is documentation-only.
+    body = SystemReadyResponse(
+        status="ready" if all_ok else "not_ready",
+        checks=checks,
+    )
     return JSONResponse(
         status_code=status_code,
-        content={"status": "ready" if all_ok else "not_ready", "checks": checks},
+        content=body.model_dump(exclude_none=True),
     )
 
 

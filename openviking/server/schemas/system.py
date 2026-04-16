@@ -11,7 +11,7 @@ instead of wrapping — same reasoning as the bot-proxy endpoints in
 
 from typing import Any, Dict, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class SystemHealthResponse(BaseModel):
@@ -37,7 +37,7 @@ class SystemReadyResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     status: str  # "ready" | "not_ready"
-    checks: Dict[str, str] = {}
+    checks: Dict[str, str] = Field(default_factory=dict)
 
 
 class SystemStatusResult(BaseModel):
